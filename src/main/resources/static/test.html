@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>GraphQL Test (local)</title>
+    <style>
+      body {
+        font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+        margin: 24px;
+        line-height: 1.4;
+      }
+      textarea {
+        width: 100%;
+        height: 160px;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        font-size: 13px;
+      }
+      input {
+        width: 100%;
+        padding: 8px;
+      }
+      button {
+        padding: 10px 14px;
+        cursor: pointer;
+      }
+      pre {
+        background: #0b1020;
+        color: #d6e0ff;
+        padding: 12px;
+        overflow: auto;
+      }
+      .row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 16px;
+      }
+      @media (max-width: 900px) {
+        .row {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <h2>Local GraphQL 테스트</h2>
+    <p>
+      서버 실행 후 이 페이지를 열면 바로 호출할 수 있어요. (기본 endpoint: <code>/graphql</code>)
+    </p>
+
+    <div class="row">
+      <div>
+        <h3>Query</h3>
+        <textarea id="query"></textarea>
+        <h3>Variables (JSON)</h3>
+        <textarea id="vars"></textarea>
+        <p>
+          <button id="btn">Send</button>
+        </p>
+      </div>
+      <div>
+        <h3>Result</h3>
+        <pre id="out"></pre>
+      </div>
+    </div>
+
+    <script>
+      const queryEl = document.getElementById("query");
+      const varsEl = document.getElementById("vars");
+      const outEl = document.getElementById("out");
+      const btn = document.getElementById("btn");
+      const graphqlUrl =
+        location.protocol === "file:" ? "http://localhost:8080/graphql" : "/graphql";
+
+      queryEl.value = `# User API examples
+query Users {
+  users { id username email }
+}
+
+# mutation CreateUser($username: String!, $email: String!) {
+#   createUser(username: $username, email: $email) { id username email }
+# }`;
+
+      varsEl.value = JSON.stringify({ username: "mkk", email: "mkk@example.com" }, null, 2);
+
+      async function send() {
+        outEl.textContent = "Loading...";
+        let variables = {};
+        try {
+          variables = varsEl.value.trim() ? JSON.parse(varsEl.value) : {};
+        } catch (e) {
+          outEl.textContent = "Variables JSON parse error: " + e;
+          return;
+        }
+
+        const res = await fetch(graphqlUrl, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            query: queryEl.value,
+            variables,
+          }),
+        });
+
+        const text = await res.text();
+        try {
+          outEl.textContent = JSON.stringify(JSON.parse(text), null, 2);
+        } catch {
+          outEl.textContent = text;
+        }
+      }
+
+      btn.addEventListener("click", send);
+      send();
+    </script>
+  </body>
+</html>
+
