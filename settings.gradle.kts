@@ -1,2 +1,2 @@
-rootProject.name = "clean-java-main"
+rootProject.name = "blog-java-main"
 

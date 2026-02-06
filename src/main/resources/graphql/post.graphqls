@@ -1,3 +1,16 @@
+extend type Query {
+  posts: [Post!]!
+  post(id: ID!): Post
+
+  postsByTag(tagName: String!): [Post!]!
+}
+
+extend type Mutation {
+  createPost(title: String!, content: String!, authorId: ID!, tagNames: [String!]): Post!
+  modifyPost(id: ID!, title: String!, content: String!, tagNames: [String!]): Post!
+  deletePost(id: ID!): Boolean!
+}
+
 type Post {
   id: ID!
   title: String!
@@ -6,5 +19,6 @@ type Post {
   comments: [Comment]
   tags: [Tag]
   createdAt: String!
-  likes: Int
+  modifiedAt: String!
+  likes: Int!
 }

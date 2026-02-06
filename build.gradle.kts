@@ -26,6 +26,9 @@ dependencies {
   implementation("org.springframework.boot:spring-boot-starter-data-jpa")
   runtimeOnly("org.postgresql:postgresql")
 
+  // Password hashing (BCrypt)
+  implementation("org.springframework.security:spring-security-crypto")
+
   testImplementation("org.springframework.boot:spring-boot-starter-test")
   testImplementation("org.springframework.graphql:spring-graphql-test")
 }

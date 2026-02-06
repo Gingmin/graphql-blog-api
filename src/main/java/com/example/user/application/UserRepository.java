@@ -5,6 +5,8 @@ import java.util.List;
 import java.util.Optional;
 
 public interface UserRepository {
+  record UserAuth(User user, String passwordHash) {}
+
   Optional<User> findById(Long id);
 
   List<User> findAll();
@@ -13,6 +15,8 @@ public interface UserRepository {
 
   boolean existsByEmail(String email);
 
-  User save(User user);
+  User create(String username, String email, String passwordHash);
+
+  Optional<UserAuth> findAuthByEmail(String email);
 }
 

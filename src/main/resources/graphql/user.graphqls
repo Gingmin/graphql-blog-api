@@ -1,16 +1,33 @@
-type Query {
+extend type Query {
+  me: User
   users: [User!]!
   user(id: ID!): User
+
+  followers(userId: ID!): [User!]!
+  following(userId: ID!): [User!]!
+  followersCount(userId: ID!): Int!
+  followingCount(userId: ID!): Int!
 }
 
-type Mutation {
-  createUser(username: String!, email: String!): User!
+type AuthPayload {
+  user: User!
+  accessToken: String!
+}
+
+extend type Mutation {
+  signUp(username: String!, email: String!, password: String!): AuthPayload!
+  login(email: String!, password: String!): AuthPayload!
+
+  followUser(myId: ID!, userId: ID!): Boolean!
+  unfollowUser(myId: ID!, userId: ID!): Boolean!
 }
 
 type User {
   id: ID!
   username: String!
   email: String!
+  createdAt: String!
+  modifiedAt: String!
   posts: [Post]
   comments: [Comment]
   followers: [User]

@@ -9,7 +9,13 @@
         color-scheme: light;
       }
       body {
-        font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+        font-family:
+          system-ui,
+          -apple-system,
+          Segoe UI,
+          Roboto,
+          Arial,
+          sans-serif;
         margin: 24px;
         line-height: 1.4;
         background: #fafafa;
@@ -130,37 +136,56 @@
             <span class="muted" id="sessionText">로그인 상태 아님</span>
           </div>
           <div class="row">
-            <button class="secondary" id="btnLogout" type="button">Logout</button>
-            <button class="secondary" id="btnWhoami" type="button">Who am I?</button>
+            <button class="secondary" id="btnLogout" type="button">
+              Logout
+            </button>
+            <button class="secondary" id="btnWhoami" type="button">
+              Who am I?
+            </button>
           </div>
         </div>
         <p class="note">
-          현재 서버 스키마에는 “진짜 로그인(비밀번호/토큰 발급)” 뮤테이션이 없어서, 이 페이지의
-          로그인 섹션은 <code>user(id)</code>로 조회해서 “로그인처럼” 저장하는 데모입니다.
-          회원가입은 <code>createUser</code>로 실제 생성됩니다.
+          이 페이지는 <code>signUp</code>/<code>login</code>으로 토큰을 발급받아
+          로컬 스토리지에 저장하는 데모입니다.
         </p>
       </div>
 
       <div class="grid">
         <div class="card">
           <h3 style="margin: 0 0 6px">회원가입</h3>
-          <div class="muted">mutation: <code>createUser(username, email)</code></div>
+          <div class="muted">
+            mutation: <code>signUp(username, email, password)</code>
+          </div>
 
           <label for="suUsername">username</label>
           <input id="suUsername" placeholder="mkk" autocomplete="off" />
 
           <label for="suEmail">email</label>
-          <input id="suEmail" placeholder="mkk@example.com" autocomplete="off" />
+          <input
+            id="suEmail"
+            placeholder="mkk@example.com"
+            autocomplete="off"
+          />
+
+          <label for="suPassword">password</label>
+          <input id="suPassword" placeholder="password" type="password" />
 
           <button id="btnSignup" type="button">Sign up</button>
         </div>
 
         <div class="card">
           <h3 style="margin: 0 0 6px">로그인(데모)</h3>
-          <div class="muted">query: <code>user(id)</code></div>
+          <div class="muted">mutation: <code>login(email, password)</code></div>
 
-          <label for="liUserId">user id</label>
-          <input id="liUserId" placeholder="1" inputmode="numeric" autocomplete="off" />
+          <label for="liEmail">email</label>
+          <input
+            id="liEmail"
+            placeholder="mkk@example.com"
+            autocomplete="off"
+          />
+
+          <label for="liPassword">password</label>
+          <input id="liPassword" placeholder="password" type="password" />
 
           <button id="btnLogin" type="button">Login</button>
         </div>
@@ -178,7 +203,9 @@
       const sessionTextEl = document.getElementById("sessionText");
 
       const graphqlUrl =
-        location.protocol === "file:" ? "http://localhost:8080/graphql" : "/graphql";
+        location.protocol === "file:"
+          ? "http://localhost:8080/graphql"
+          : "/graphql";
       endpointEl.textContent = graphqlUrl;
 
       function setOut(obj) {
@@ -193,6 +220,14 @@
           localStorage.removeItem("session.user");
         }
         renderSession();
+      }
+
+      function setToken(token) {
+        if (token) {
+          localStorage.setItem("session.token", token);
+        } else {
+          localStorage.removeItem("session.token");
+        }
       }
 
       function getSession() {
@@ -211,10 +246,19 @@
           : "로그인 상태 아님";
       }
 
+      function goBlog() {
+        location.href = "/blog.html";
+      }
+
       async function gql(query, variables) {
+        const token = localStorage.getItem("session.token");
+        const headers = { "Content-Type": "application/json" };
+        if (token) {
+          headers["Authorization"] = "Bearer " + token;
+        }
         const res = await fetch(graphqlUrl, {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers,
           body: JSON.stringify({ query, variables }),
         });
         const text = await res.text();
@@ -233,81 +277,99 @@
         return json.data;
       }
 
-      document.getElementById("btnSignup").addEventListener("click", async () => {
-        const username = document.getElementById("suUsername").value.trim();
-        const email = document.getElementById("suEmail").value.trim();
-        if (!username || !email) {
-          setOut("username/email을 입력해줘");
-          return;
-        }
-
-        const query = `mutation CreateUser($username: String!, $email: String!) {
-  createUser(username: $username, email: $email) { id username email }
-}`;
-
-        setOut("Loading...");
-        try {
-          const json = await gql(query, { username, email });
-          const data = pickDataOrThrow(json);
-          setSession(data.createUser);
-          setOut(json);
-        } catch (e) {
-          setOut(String(e));
-        }
-      });
-
-      document.getElementById("btnLogin").addEventListener("click", async () => {
-        const id = document.getElementById("liUserId").value.trim();
-        if (!id) {
-          setOut("user id를 입력해줘");
-          return;
-        }
-
-        const query = `query User($id: ID!) {
-  user(id: $id) { id username email }
-}`;
-
-        setOut("Loading...");
-        try {
-          const json = await gql(query, { id });
-          const data = pickDataOrThrow(json);
-          if (!data.user) {
-            setOut({ ...json, note: "user(id)가 null이라 로그인 실패(데모)" });
+      document
+        .getElementById("btnSignup")
+        .addEventListener("click", async () => {
+          const username = document.getElementById("suUsername").value.trim();
+          const email = document.getElementById("suEmail").value.trim();
+          const password = document.getElementById("suPassword").value;
+          if (!username || !email || !password) {
+            setOut("username/email/password를 입력해줘");
             return;
           }
-          setSession(data.user);
-          setOut(json);
-        } catch (e) {
-          setOut(String(e));
-        }
-      });
+
+          const query = `mutation SignUp($username: String!, $email: String!, $password: String!) {
+  signUp(username: $username, email: $email, password: $password) {
+    accessToken
+    user { id username email createdAt modifiedAt }
+  }
+}`;
+
+          setOut("Loading...");
+          try {
+            const json = await gql(query, { username, email, password });
+            const data = pickDataOrThrow(json);
+            setSession(data.signUp.user);
+            setToken(data.signUp.accessToken);
+            setOut(json);
+            goBlog();
+          } catch (e) {
+            setOut(String(e));
+          }
+        });
+
+      document
+        .getElementById("btnLogin")
+        .addEventListener("click", async () => {
+          const email = document.getElementById("liEmail").value.trim();
+          const password = document.getElementById("liPassword").value;
+          if (!email || !password) {
+            setOut("email + password를 입력해줘");
+            return;
+          }
+
+          const query = `mutation Login($email: String!, $password: String!) {
+  login(email: $email, password: $password) {
+    accessToken
+    user { id username email createdAt modifiedAt }
+  }
+}`;
+
+          setOut("Loading...");
+          try {
+            const json = await gql(query, { email, password });
+            const data = pickDataOrThrow(json);
+            setSession(data.login.user);
+            setToken(data.login.accessToken);
+            setOut(json);
+            goBlog();
+          } catch (e) {
+            setOut(String(e));
+          }
+        });
 
       document.getElementById("btnLogout").addEventListener("click", () => {
         setSession(null);
+        setToken(null);
         setOut("Logged out");
+        location.href = "/auth.html";
       });
 
-      document.getElementById("btnWhoami").addEventListener("click", async () => {
-        const u = getSession();
-        if (!u?.id) {
-          setOut("세션이 비어있어");
-          return;
-        }
-        const query = `query User($id: ID!) {
-  user(id: $id) { id username email }
+      document
+        .getElementById("btnWhoami")
+        .addEventListener("click", async () => {
+          const token = localStorage.getItem("session.token");
+          if (!token) {
+            setOut("토큰이 없어 (먼저 로그인/회원가입)");
+            return;
+          }
+          const query = `query Me {
+  me { id username email createdAt modifiedAt }
 }`;
-        setOut("Loading...");
-        try {
-          const json = await gql(query, { id: u.id });
-          setOut(json);
-        } catch (e) {
-          setOut(String(e));
-        }
-      });
+          setOut("Loading...");
+          try {
+            const json = await gql(query, {});
+            setOut(json);
+          } catch (e) {
+            setOut(String(e));
+          }
+        });
 
       renderSession();
+      if (getSession()) {
+        goBlog();
+      }
       setOut("Ready");
     </script>
   </body>
 </html>
-

@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Blog</title>
+    <style>
+      body {
+        font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+        margin: 24px;
+        line-height: 1.4;
+        background: #fafafa;
+        color: #111827;
+      }
+      .container {
+        max-width: 980px;
+        margin: 0 auto;
+      }
+      .card {
+        background: #fff;
+        border: 1px solid #e5e7eb;
+        border-radius: 12px;
+        padding: 16px;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+      }
+      .row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px;
+        flex-wrap: wrap;
+      }
+      .muted {
+        color: #6b7280;
+        font-size: 13px;
+      }
+      button {
+        padding: 10px 14px;
+        border: 1px solid #111827;
+        background: #111827;
+        color: white;
+        border-radius: 10px;
+        cursor: pointer;
+        font-size: 14px;
+      }
+      pre {
+        margin-top: 12px;
+        background: #0b1020;
+        color: #d6e0ff;
+        padding: 12px;
+        overflow: auto;
+        border-radius: 12px;
+        border: 1px solid #111827;
+        min-height: 160px;
+      }
+      code {
+        font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="card">
+        <div class="row">
+          <div>
+            <h2 style="margin: 0 0 4px">Blog</h2>
+            <div class="muted">세션 기반(데모) 화면</div>
+          </div>
+          <div class="row">
+            <button id="btnLogout" type="button">Logout</button>
+          </div>
+        </div>
+
+        <pre id="me"></pre>
+        <div class="muted">
+          세션이 없으면 <code>/auth.html</code>로 자동 이동합니다.
+        </div>
+      </div>
+    </div>
+
+    <script>
+      const meEl = document.getElementById("me");
+
+      function getSession() {
+        try {
+          const raw = localStorage.getItem("session.user");
+          return raw ? JSON.parse(raw) : null;
+        } catch {
+          return null;
+        }
+      }
+
+      function getToken() {
+        return localStorage.getItem("session.token");
+      }
+
+      function render() {
+        const u = getSession();
+        if (!u) {
+          location.href = "/auth.html";
+          return;
+        }
+        meEl.textContent = JSON.stringify({ sessionUser: u, token: getToken() }, null, 2);
+      }
+
+      document.getElementById("btnLogout").addEventListener("click", () => {
+        localStorage.removeItem("session.user");
+        localStorage.removeItem("session.token");
+        location.href = "/auth.html";
+      });
+
+      render();
+    </script>
+  </body>
+</html>
+

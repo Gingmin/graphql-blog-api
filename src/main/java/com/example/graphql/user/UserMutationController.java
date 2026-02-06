@@ -14,8 +14,19 @@ public class UserMutationController {
   }
 
   @MutationMapping
-  public UserGql createUser(@Argument("username") String username, @Argument("email") String email) {
-    return UserMapper.toGql(userService.createUser(username, email));
+  public AuthPayloadGql signUp(
+      @Argument("username") String username,
+      @Argument("email") String email,
+      @Argument("password") String password) {
+    var result = userService.signUp(username, email, password);
+    return new AuthPayloadGql(UserMapper.toGql(result.user()), result.accessToken());
+  }
+
+  @MutationMapping
+  public AuthPayloadGql login(
+      @Argument("email") String email, @Argument("password") String password) {
+    var result = userService.login(email, password);
+    return new AuthPayloadGql(UserMapper.toGql(result.user()), result.accessToken());
   }
 }
 

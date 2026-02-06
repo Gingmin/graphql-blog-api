@@ -37,18 +37,18 @@ public class UserRepositoryAdapter implements UserRepository {
   }
 
   @Override
-  public User save(User user) {
-    var saved = jpaRepository.save(toEntity(user));
+  public User create(String username, String email, String passwordHash) {
+    var saved = jpaRepository.save(new UserJpaEntity(username, email, passwordHash));
     return toDomain(saved);
   }
 
-  private static User toDomain(UserJpaEntity e) {
-    return new User(e.getId(), e.getUsername(), e.getEmail());
+  @Override
+  public Optional<UserAuth> findAuthByEmail(String email) {
+    return jpaRepository.findByEmail(email).map(e -> new UserAuth(toDomain(e), e.getPasswordHash()));
   }
 
-  private static UserJpaEntity toEntity(User user) {
-    // 신규 생성 케이스만 우선 지원 (id는 DB에서 생성)
-    return new UserJpaEntity(user.username(), user.email());
+  private static User toDomain(UserJpaEntity e) {
+    return new User(e.getId(), e.getUsername(), e.getEmail(), e.getCreatedAt(), e.getModifiedAt());
   }
 }
 

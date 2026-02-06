@@ -1,7 +1,14 @@
+extend type Mutation {
+  createComment(postId: ID!, authorId: ID!, content: String!): Comment!
+  modifyComment(id: ID!, content: String!): Comment!
+  deleteComment(id: ID!): Boolean!
+}
+
 type Comment {
   id: ID!
   content: String!
   author: User!
   post: Post!
   createdAt: String!
+  modifiedAt: String!
 }

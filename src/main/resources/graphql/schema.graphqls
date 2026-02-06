@@ -1,0 +1,17 @@
+schema {
+  query: Query
+  mutation: Mutation
+}
+
+"""
+Root types.
+각 feature 파일에서 `extend type Query/Mutation`으로 확장합니다.
+"""
+type Query {
+  _empty: String
+}
+
+type Mutation {
+  _empty: String
+}
+

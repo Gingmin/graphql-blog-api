@@ -200,3 +200,13 @@ mutation {
 - **Run Spring Boot (bootJar app.jar)**: `bootJar`로 만든 `build/libs/app.jar`를 classpath로 사용해 실행  
   (IDE가 modulepath/classpath를 자동 구성 못 할 때도 동작하도록 만든 옵션)
 
+### 디버그가 안 될 때(중요)
+
+파일(`BlogApplication.java`)에서 바로 보이는 Run/Debug 버튼(CodeLens)은 환경에 따라 **Gradle classpath를 안 타고**
+JDT 임시 classpath로 실행되면서 `SpringApplication cannot be resolved` 같은 오류가 날 수 있습니다.
+
+권장 디버그 방법:
+
+1) `Run and Debug` 패널에서 **`Debug (bootRun --debug-jvm + attach)`** 실행  
+2) 또는 터미널에서 `.\gradlew.bat bootRun --debug-jvm` 실행 후 **Attach(5005)** 로 붙기
+

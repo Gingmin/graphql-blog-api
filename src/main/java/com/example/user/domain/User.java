@@ -1,4 +1,6 @@
 package com.example.user.domain;
 
-public record User(Long id, String username, String email) {}
+import java.time.Instant;
+
+public record User(Long id, String username, String email, Instant createdAt, Instant modifiedAt) {}
 
