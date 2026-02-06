@@ -1,116 +1,777 @@
 <!doctype html>
 <html lang="ko">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Blog</title>
-    <style>
-      body {
-        font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
-        margin: 24px;
-        line-height: 1.4;
-        background: #fafafa;
-        color: #111827;
-      }
-      .container {
-        max-width: 980px;
-        margin: 0 auto;
-      }
-      .card {
-        background: #fff;
-        border: 1px solid #e5e7eb;
-        border-radius: 12px;
-        padding: 16px;
-        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
-      }
-      .row {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        gap: 12px;
-        flex-wrap: wrap;
-      }
-      .muted {
-        color: #6b7280;
-        font-size: 13px;
-      }
-      button {
-        padding: 10px 14px;
-        border: 1px solid #111827;
-        background: #111827;
-        color: white;
-        border-radius: 10px;
-        cursor: pointer;
-        font-size: 14px;
-      }
-      pre {
-        margin-top: 12px;
-        background: #0b1020;
-        color: #d6e0ff;
-        padding: 12px;
-        overflow: auto;
-        border-radius: 12px;
-        border: 1px solid #111827;
-        min-height: 160px;
-      }
-      code {
-        font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-      }
-    </style>
-  </head>
-  <body>
-    <div class="container">
-      <div class="card">
-        <div class="row">
-          <div>
-            <h2 style="margin: 0 0 4px">Blog</h2>
-            <div class="muted">세션 기반(데모) 화면</div>
-          </div>
-          <div class="row">
-            <button id="btnLogout" type="button">Logout</button>
-          </div>
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <title>Blog</title>
+        <style>
+            *,
+            *::before,
+            *::after {
+                box-sizing: border-box;
+            }
+            body {
+                font-family:
+                    system-ui,
+                    -apple-system,
+                    Segoe UI,
+                    Roboto,
+                    Arial,
+                    sans-serif;
+                margin: 24px;
+                line-height: 1.4;
+                background: #fafafa;
+                color: #111827;
+            }
+            .container {
+                max-width: 980px;
+                margin: 0 auto;
+            }
+            .card {
+                background: #fff;
+                border: 1px solid #e5e7eb;
+                border-radius: 12px;
+                padding: 16px;
+                box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+            }
+            .row {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                gap: 12px;
+                flex-wrap: wrap;
+            }
+            .row2 {
+                display: flex;
+                gap: 8px;
+                align-items: center;
+                flex-wrap: wrap;
+            }
+            .muted {
+                color: #6b7280;
+                font-size: 13px;
+            }
+            .grid {
+                display: grid;
+                grid-template-columns: 360px 1fr;
+                gap: 16px;
+                margin-top: 16px;
+            }
+            .grid.closed {
+                grid-template-columns: 1fr;
+            }
+            @media (max-width: 980px) {
+                .grid {
+                    grid-template-columns: 1fr;
+                }
+            }
+            .list {
+                display: flex;
+                flex-direction: column;
+                gap: 10px;
+            }
+            .item {
+                border: 1px solid #e5e7eb;
+                border-radius: 12px;
+                padding: 12px;
+                cursor: pointer;
+                background: #fff;
+            }
+            .item.active {
+                border-color: #111827;
+            }
+            .item h4 {
+                margin: 0 0 6px;
+                font-size: 15px;
+            }
+            .pill {
+                display: inline-block;
+                padding: 2px 8px;
+                border-radius: 999px;
+                border: 1px solid #e5e7eb;
+                font-size: 12px;
+                color: #374151;
+                background: #fff;
+            }
+            .tags {
+                display: flex;
+                gap: 6px;
+                flex-wrap: wrap;
+                margin-top: 10px;
+            }
+            .tag {
+                display: inline-flex;
+                align-items: center;
+                gap: 8px;
+                padding: 6px 10px;
+                border-radius: 999px;
+                border: 1px solid #e5e7eb;
+                background: #f9fafb;
+                font-size: 13px;
+                color: #111827;
+                line-height: 1;
+            }
+            .tag .tag-x {
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                width: 20px;
+                height: 20px;
+                border-radius: 999px;
+                border: 1px solid #e5e7eb;
+                background: #fff;
+                color: #111827;
+                cursor: pointer;
+                font-size: 12px;
+                padding: 0;
+            }
+            label {
+                display: block;
+                margin: 10px 0 6px;
+                font-size: 13px;
+                color: #374151;
+            }
+            input,
+            textarea {
+                width: 100%;
+                padding: 10px 12px;
+                border: 1px solid #e5e7eb;
+                border-radius: 10px;
+                font-size: 14px;
+                font-family: inherit;
+                min-height: 60px;
+                resize: vertical;
+            }
+            button {
+                padding: 10px 14px;
+                border: 1px solid #111827;
+                background: #111827;
+                color: white;
+                border-radius: 10px;
+                cursor: pointer;
+                font-size: 14px;
+            }
+            button.secondary {
+                border-color: #e5e7eb;
+                background: #fff;
+                color: #111827;
+            }
+            button.danger {
+                border-color: #ef4444;
+                background: #ef4444;
+                color: white;
+            }
+            pre {
+                margin-top: 12px;
+                background: #0b1020;
+                color: #d6e0ff;
+                padding: 12px;
+                overflow: auto;
+                border-radius: 12px;
+                border: 1px solid #111827;
+                min-height: 160px;
+            }
+            code {
+                font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+            }
+            .date {
+                text-align: right;
+                font-size: 12px;
+                color: #6b7280;
+            }
+            .tag {
+                background-color: #e5e7eb;
+                font-size: 12px;
+                padding: 2px 8px;
+                border-radius: 4px;
+                border: 1px solid #e5e7eb;
+                color: #374151;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <div class="card">
+                <div class="row">
+                    <div>
+                        <h2 style="margin: 0 0 4px">Blog</h2>
+                        <div class="muted">GraphQL 데모 화면 (Post 목록/상세)</div>
+                    </div>
+                    <div class="row">
+                        <button id="btnLogout" type="button">Logout</button>
+                    </div>
+                </div>
+
+                <div class="grid closed" id="grid">
+                    <!-- 게시글 목록 -->
+                    <div class="card" style="border: none; box-shadow: none; padding: 0">
+                        <div class="row2" style="justify-content: space-between; margin-bottom: 8px">
+                            <div class="muted">
+                                로그인 유저:
+                                <code id="meInline"></code>
+                            </div>
+                            <div class="row2">
+                                <button class="secondary" id="btnRefresh" type="button">Refresh</button>
+                                <button id="btnNewPost" type="button">New post</button>
+                            </div>
+                        </div>
+                        <div class="list" id="postList"></div>
+                    </div>
+
+                    <!-- 게시글 상세 -->
+                    <div class="card" id="detailCard" style="overflow: hidden">
+                        <div id="detailUi" style="display: none">
+                            <div class="row2" style="justify-content: space-between; margin-top: 12px">
+                                <div class="row2">
+                                    <span class="pill">likes: <span id="likesCount">0</span></span>
+                                    <button id="btnLike" class="secondary" type="button">Like</button>
+                                </div>
+                                <div class="row2">
+                                    <button id="btnClose" class="secondary" type="button">Close</button>
+                                    <button id="btnEdit" class="secondary" type="button">Edit mode</button>
+                                    <button id="btnDelete" class="danger" type="button">Delete</button>
+                                </div>
+                            </div>
+
+                            <div id="editForm" style="display: none; margin-top: 12px">
+                                <label for="editTitle">title</label>
+                                <input id="editTitle" />
+
+                                <label for="editContent">content</label>
+                                <textarea id="editContent"></textarea>
+
+                                <label>tags</label>
+                                <div id="editTagsList" class="tags"></div>
+                                <div class="row2" style="margin-top: 8px">
+                                    <input id="tagAddInput" placeholder="태그 입력" style="flex: 1" />
+                                    <button id="btnAddTag" class="secondary" type="button">Add</button>
+                                </div>
+
+                                <div class="row2" style="margin-top: 10px">
+                                    <button id="btnSave" type="button">Save</button>
+                                    <button id="btnCancel" class="secondary" type="button">Cancel</button>
+                                </div>
+                            </div>
+
+                            <div id="viewForm" style="display: none; margin-top: 12px">
+                                <h3 style="margin: 0 0 8px; font-size: 16px" id="viewTitle"></h3>
+                                <div style="margin-top: 10px">
+                                    <div id="viewContent"></div>
+                                    <div id="viewTags" class="tags"></div>
+                                    <div id="viewCreatedAt" class="date"></div>
+                                    <div id="viewModifiedAt" class="date"></div>
+                                </div>
+                            </div>
+
+                            <div style="margin-top: 16px">
+                                <h3 style="margin: 0 0 8px; font-size: 16px">댓글</h3>
+                                <div style="margin-top: 10px">
+                                    <textarea id="commentInput" placeholder="댓글 입력..." disabled></textarea>
+                                    <div class="row2" style="margin-top: 8px">
+                                        <button class="secondary" type="button" disabled>Add comment</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- 서버 응답 표시 -->
+                        <pre id="detailOut"></pre>
+                    </div>
+                </div>
+            </div>
         </div>
 
-        <pre id="me"></pre>
-        <div class="muted">
-          세션이 없으면 <code>/auth.html</code>로 자동 이동합니다.
-        </div>
-      </div>
-    </div>
+        <script>
+            const graphqlUrl = location.protocol === "file:" ? "http://localhost:8080/graphql" : "/graphql";
 
-    <script>
-      const meEl = document.getElementById("me");
+            const meInlineEl = document.getElementById("meInline");
+            const gridEl = document.getElementById("grid");
+            const listEl = document.getElementById("postList");
+            const detailOutEl = document.getElementById("detailOut");
+            const detailUiEl = document.getElementById("detailUi");
+            const likesCountEl = document.getElementById("likesCount");
 
-      function getSession() {
-        try {
-          const raw = localStorage.getItem("session.user");
-          return raw ? JSON.parse(raw) : null;
-        } catch {
-          return null;
-        }
-      }
+            const editForm = document.getElementById("editForm");
+            const editTitle = document.getElementById("editTitle");
+            const editContent = document.getElementById("editContent");
+            const editTagsListEl = document.getElementById("editTagsList");
+            const tagAddInputEl = document.getElementById("tagAddInput");
+            const btnAddTagEl = document.getElementById("btnAddTag");
 
-      function getToken() {
-        return localStorage.getItem("session.token");
-      }
+            const viewForm = document.getElementById("viewForm");
+            const viewTitleEl = document.getElementById("viewTitle");
+            const viewContentEl = document.getElementById("viewContent");
+            const viewTagsEl = document.getElementById("viewTags");
+            const viewCreatedAtEl = document.getElementById("viewCreatedAt");
+            const viewModifiedAtEl = document.getElementById("viewModifiedAt");
 
-      function render() {
-        const u = getSession();
-        if (!u) {
-          location.href = "/auth.html";
-          return;
-        }
-        meEl.textContent = JSON.stringify({ sessionUser: u, token: getToken() }, null, 2);
-      }
+            const btnEdit = document.getElementById("btnEdit");
+            const btnDelete = document.getElementById("btnDelete");
+            const btnNewPost = document.getElementById("btnNewPost");
+            const btnClose = document.getElementById("btnClose");
 
-      document.getElementById("btnLogout").addEventListener("click", () => {
-        localStorage.removeItem("session.user");
-        localStorage.removeItem("session.token");
-        location.href = "/auth.html";
-      });
+            let selectedPost = null;
+            let editMode = false;
+            let createMode = false;
+            let tagState = [];
 
-      render();
-    </script>
-  </body>
+            function getSession() {
+                try {
+                    const raw = localStorage.getItem("session.user");
+                    return raw ? JSON.parse(raw) : null;
+                } catch {
+                    return null;
+                }
+            }
+
+            function getToken() {
+                return localStorage.getItem("session.token");
+            }
+
+            async function gql(query, variables) {
+                const token = getToken();
+                const headers = { "Content-Type": "application/json" };
+
+                if (token) {
+                    headers["Authorization"] = "Bearer " + token;
+                }
+
+                const res = await fetch(graphqlUrl, {
+                    method: "POST",
+                    headers,
+                    body: JSON.stringify({ query, variables }),
+                });
+
+                const text = await res.text();
+
+                try {
+                    return JSON.parse(text);
+                } catch {
+                    return { raw: text };
+                }
+            }
+
+            function pickDataOrThrow(json) {
+                if (json?.errors?.length) {
+                    const msg = json.errors.map((e) => e.message).join("\n");
+                    throw new Error(msg);
+                }
+                return json.data;
+            }
+
+            function ensureLoggedIn() {
+                const u = getSession();
+                if (!u) {
+                    location.href = "/auth.html";
+                    return null;
+                }
+                return u;
+            }
+
+            function setDetailText(obj) {
+                detailOutEl.textContent = typeof obj === "string" ? obj : JSON.stringify(obj, null, 2);
+            }
+
+            function isMine(post, me) {
+                return post && me && String(post.authorId) === String(me.id);
+            }
+
+            function parseTags(csv) {
+                const raw = (csv ?? "").trim();
+
+                if (!raw) {
+                    return [];
+                }
+
+                return raw
+                    .split(",")
+                    .map((s) => s.trim())
+                    .filter((s) => s.length > 0);
+            }
+
+            function normalizeTag(name) {
+                return String(name ?? "").trim();
+            }
+
+            function setTags(tags) {
+                tagState = (tags ?? []).map(normalizeTag).filter((t) => t.length > 0);
+                // distinct 유지
+                tagState = Array.from(new Set(tagState));
+                renderTags();
+            }
+
+            function renderTags() {
+                // view
+                viewTagsEl.innerHTML = "";
+                for (const t of tagState) {
+                    const el = document.createElement("span");
+                    el.className = "tag";
+                    el.textContent = t;
+                    viewTagsEl.appendChild(el);
+                }
+
+                // edit
+                editTagsListEl.innerHTML = "";
+                for (const t of tagState) {
+                    const el = document.createElement("span");
+                    el.className = "tag";
+
+                    const text = document.createElement("span");
+                    text.textContent = t;
+                    el.appendChild(text);
+
+                    const x = document.createElement("button");
+                    x.type = "button";
+                    x.className = "tag-x";
+                    x.textContent = "x";
+                    x.addEventListener("click", () => {
+                        tagState = tagState.filter((v) => v !== t);
+                        renderTags();
+                    });
+                    el.appendChild(x);
+
+                    editTagsListEl.appendChild(el);
+                }
+            }
+
+            function setEditMode(on) {
+                editMode = !!on;
+                editForm.style.display = editMode ? "block" : "none";
+                viewForm.style.display = editMode ? "none" : "block";
+                btnEdit.textContent = editMode ? "View" : "Edit";
+            }
+
+            function openDetail() {
+                gridEl.classList.remove("closed");
+            }
+
+            function closeDetail() {
+                createMode = false;
+                selectedPost = null;
+                setEditMode(false);
+                detailUiEl.style.display = "none";
+                gridEl.classList.add("closed");
+                setDetailText("");
+            }
+
+            async function loadPosts() {
+                const query = `
+                    query Posts {
+                        posts {
+                            id
+                            title
+                            content
+                            authorId
+                            tagNames
+                            createdAt
+                            modifiedAt
+                            likes
+                        }
+                    }
+                `;
+                const json = await gql(query, {});
+                const data = pickDataOrThrow(json);
+                return data.posts ?? [];
+            }
+
+            async function loadPost(id) {
+                const query = `
+                    query Post($id: ID!) {
+                        post(id: $id) {
+                            id
+                            title
+                            content
+                            authorId
+                            tagNames
+                            createdAt
+                            modifiedAt
+                            likes
+                        }
+                    }`;
+                const json = await gql(query, { id });
+                const data = pickDataOrThrow(json);
+                return data.post;
+            }
+
+            async function refreshListAndKeepSelection() {
+                // Refresh는 언제 눌러도 "작성/상세 UI가 켜진 채로 남는" 일이 없게 방어적으로 처리
+                const hadSelection = !!selectedPost?.id;
+                if (!hadSelection) {
+                    detailUiEl.style.display = "none";
+                }
+
+                const posts = await loadPosts();
+                renderList(posts);
+
+                if (selectedPost?.id) {
+                    await openPost(selectedPost.id);
+                } else {
+                    setDetailText("게시글을 선택해줘");
+                    closeDetail();
+                }
+            }
+
+            function renderList(posts) {
+                const activeId = selectedPost?.id;
+                listEl.innerHTML = "";
+
+                for (const p of posts) {
+                    const div = document.createElement("div");
+                    div.className = "item" + (String(p.id) === String(activeId) ? " active" : "");
+                    div.innerHTML = `
+                      <h4>${escapeHtml(p.title ?? "(no title)")}</h4>
+                      <div class="muted">
+                          <span class="pill">id: ${escapeHtml(String(p.id))}</span>
+                          <span class="pill">authorId: ${escapeHtml(String(p.authorId))}</span>
+                          <span class="pill">likes: ${escapeHtml(String(p.likes ?? 0))}</span>
+                      </div>
+                      <div class="muted" style="margin-top:6px">
+                          tags: ${(p.tagNames ?? []).map(escapeHtml).join(", ") || "-"}
+                      </div>
+                    `;
+                    div.addEventListener("click", () => openPost(p.id));
+                    listEl.appendChild(div);
+                }
+            }
+
+            function escapeHtml(s) {
+                return String(s).replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;").replaceAll("'", "&#039;");
+            }
+
+            async function openPost(id) {
+                createMode = false;
+                setEditMode(false);
+                setDetailText("Loading...");
+                detailUiEl.style.display = "none";
+                openDetail();
+                const post = await loadPost(String(id));
+
+                selectedPost = post;
+                setDetailText(post ?? "not found");
+
+                if (!post) {
+                    return;
+                }
+
+                detailUiEl.style.display = "block";
+                likesCountEl.textContent = String(post.likes ?? 0);
+
+                const me = ensureLoggedIn();
+                const mine = isMine(post, me);
+
+                btnEdit.style.display = mine ? "inline-block" : "none";
+                btnDelete.style.display = mine ? "inline-block" : "none";
+
+                editTitle.value = post.title ?? "";
+                editContent.value = post.content ?? "";
+                setTags(post.tagNames ?? []);
+                tagAddInputEl.value = "";
+
+                viewTitleEl.textContent = post.title ?? "";
+                viewContentEl.innerHTML = post.content ?? "";
+                viewCreatedAtEl.textContent = formatDate(post.createdAt ?? "");
+                viewModifiedAtEl.textContent = formatDate(post.modifiedAt ?? "");
+            }
+
+            function formatDate(dateStr) {
+                return new Date(dateStr).toLocaleString("ko-KR", {
+                    year: "numeric",
+                    month: "2-digit",
+                    day: "2-digit",
+                    hour: "2-digit",
+                    minute: "2-digit",
+                });
+            }
+
+            function openCreate() {
+                const me = ensureLoggedIn();
+                if (!me) {
+                    return;
+                }
+
+                createMode = true;
+                selectedPost = null;
+                openDetail();
+
+                detailUiEl.style.display = "block";
+                likesCountEl.textContent = "0";
+                btnEdit.style.display = "none";
+                btnDelete.style.display = "none";
+
+                editTitle.value = "";
+                editContent.value = "";
+                setTags([]);
+                tagAddInputEl.value = "";
+
+                setDetailText("새 게시글 작성");
+                setEditMode(true);
+            }
+
+            async function goListView() {
+                closeDetail();
+            }
+
+            document.getElementById("btnLogout").addEventListener("click", () => {
+                localStorage.removeItem("session.user");
+                localStorage.removeItem("session.token");
+                location.href = "/auth.html";
+            });
+
+            document.getElementById("btnRefresh").addEventListener("click", async () => {
+                // 작성 중 Refresh를 눌렀다면 목록으로 복귀하는 게 자연스러움
+                if (createMode) {
+                    await goListView();
+                    return;
+                }
+
+                try {
+                    await refreshListAndKeepSelection();
+                } catch (e) {
+                    // 실패해도 상세 UI가 켜진 채로 남지 않게
+                    if (!selectedPost?.id) {
+                        detailUiEl.style.display = "none";
+                    }
+                    setDetailText(String(e));
+                }
+            });
+
+            btnNewPost.addEventListener("click", () => openCreate());
+
+            btnClose.addEventListener("click", () => {
+                goListView();
+            });
+
+            document.getElementById("btnLike").addEventListener("click", () => {
+                alert("좋아요 mutation이 아직 없어. (UI만 만들어둠)");
+            });
+
+            function addTagFromInput() {
+                const t = normalizeTag(tagAddInputEl.value);
+                if (!t) return;
+                if (!tagState.includes(t)) {
+                    tagState.push(t);
+                    renderTags();
+                }
+                tagAddInputEl.value = "";
+                tagAddInputEl.focus();
+            }
+
+            btnAddTagEl.addEventListener("click", addTagFromInput);
+            tagAddInputEl.addEventListener("keydown", (e) => {
+                if (e.key === "Enter") {
+                    e.preventDefault();
+                    addTagFromInput();
+                }
+            });
+
+            btnEdit.addEventListener("click", () => {
+                if (btnEdit.disabled) {
+                    return;
+                }
+                setEditMode(!editMode);
+            });
+
+            document.getElementById("btnCancel").addEventListener("click", () => {
+                goListView();
+            });
+
+            document.getElementById("btnSave").addEventListener("click", async () => {
+                const me = ensureLoggedIn();
+                const title = editTitle.value.trim();
+                const content = editContent.value.trim();
+                const tagNames = tagState.slice();
+
+                if (!title || !content) {
+                    setDetailText("title/content는 필수야");
+                    return;
+                }
+
+                const mutation = createMode
+                    ? `mutation CreatePost($title: String!, $content: String!, $authorId: ID!, $tagNames: [String!]) {
+                        createPost(title: $title, content: $content, authorId: $authorId, tagNames: $tagNames) {
+                          id title content authorId tagNames createdAt modifiedAt likes
+                        }
+                      }`
+                    : `mutation ModifyPost($id: ID!, $title: String!, $content: String!, $tagNames: [String!]) {
+                        modifyPost(id: $id, title: $title, content: $content, tagNames: $tagNames) {
+                          id title content authorId tagNames createdAt modifiedAt likes
+                        }
+                      }`;
+                setDetailText("Saving...");
+                try {
+                    if (!createMode) {
+                        if (!selectedPost?.id) {
+                            return;
+                        }
+                        if (!isMine(selectedPost, me)) {
+                            return;
+                        }
+                    }
+
+                    const vars = createMode ? { title, content, authorId: String(me.id), tagNames } : { id: String(selectedPost.id), title, content, tagNames };
+
+                    const json = await gql(mutation, vars);
+                    const data = pickDataOrThrow(json);
+
+                    selectedPost = createMode ? data.createPost : data.modifyPost;
+                    createMode = false;
+                    setEditMode(false);
+
+                    await refreshListAndKeepSelection();
+
+                    if (selectedPost?.id) {
+                        await openPost(selectedPost.id);
+                    }
+                } catch (e) {
+                    setDetailText(String(e));
+                }
+            });
+
+            btnDelete.addEventListener("click", async () => {
+                const me = ensureLoggedIn();
+                if (!selectedPost?.id) {
+                    return;
+                }
+                if (!isMine(selectedPost, me)) {
+                    return;
+                }
+                if (!confirm("정말 삭제할까?")) {
+                    return;
+                }
+
+                const mutation = `
+                  mutation DeletePost($id: ID!) {
+                    deletePost(id: $id)
+                }`;
+
+                setDetailText("Deleting...");
+
+                try {
+                    const json = await gql(mutation, { id: String(selectedPost.id) });
+
+                    pickDataOrThrow(json);
+                    selectedPost = null;
+                    setEditMode(false);
+                    await refreshListAndKeepSelection();
+                } catch (e) {
+                    setDetailText(String(e));
+                }
+            });
+
+            (async function init() {
+                const me = ensureLoggedIn();
+                if (!me) {
+                    return;
+                }
+
+                meInlineEl.textContent = `${me.username} (id=${me.id})`;
+                closeDetail();
+
+                try {
+                    await refreshListAndKeepSelection();
+                } catch (e) {
+                    setDetailText(String(e));
+                }
+            })();
+        </script>
+    </body>
 </html>
-
