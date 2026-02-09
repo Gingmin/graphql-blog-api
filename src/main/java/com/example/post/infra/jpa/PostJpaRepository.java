@@ -1,6 +1,7 @@
 package com.example.post.infra.jpa;
 
 import java.util.List;
+import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -8,15 +9,33 @@ import org.springframework.data.repository.query.Param;
 public interface PostJpaRepository extends JpaRepository<PostJpaEntity, Long> {
     
     @Query(
-        value =
-            """
-            select p.*
-            from posts p
-            join post_tags pt on pt.post_id = p.id
-            join tags t on t.id = pt.tag_id
-            where t.name = :tagName
-            order by p.created_at desc
-            """,
-        nativeQuery = true)
-    List<PostJpaEntity> findByTagName(@Param("tagName") String tagName);
+        """
+        SELECT DISTINCT p
+          from PostJpaEntity p
+          LEFT JOIN FETCH p.postTags pt
+          LEFT JOIN FETCH pt.tag t
+         ORDER BY p.createdAt DESC
+        """)
+    List<PostJpaEntity> findAllWithTags();
+
+    @Query(
+        """
+        SELECT p
+          from PostJpaEntity p
+          LEFT JOIN FETCH p.postTags pt
+          LEFT JOIN FETCH pt.tag t
+         WHERE p.id = :id
+        """)
+    Optional<PostJpaEntity> findByIdWithTags(@Param("id") Long id);
+
+    @Query(
+        """
+        SELECT DISTINCT p
+          from PostJpaEntity p
+          JOIN p.postTags pt
+          JOIN pt.tag t
+         WHERE t.name = :tagName
+         ORDER BY p.createdAt DESC
+        """)
+    List<PostJpaEntity> findByTagNameWithTags(@Param("tagName") String tagName);
 }

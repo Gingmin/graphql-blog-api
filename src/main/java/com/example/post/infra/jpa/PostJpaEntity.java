@@ -9,6 +9,12 @@ import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
 import java.time.Instant;
+import java.util.LinkedHashSet;
+import java.util.Set;
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.OneToMany;
+import com.example.tag.infra.jpa.TagJpaEntity;
 
 @Entity
 @Table(name = "posts")
@@ -35,6 +41,13 @@ public class PostJpaEntity {
     @Column(name = "likes_count", nullable = false)
     private int likesCount;
 
+    @OneToMany(
+        mappedBy = "post",
+        fetch = FetchType.LAZY,
+        cascade = CascadeType.ALL,
+        orphanRemoval = true)
+    private Set<PostTagJpaEntity> postTags = new LinkedHashSet<>();
+
     protected PostJpaEntity() {}
 
     public PostJpaEntity(String title, String content, Long authorId) {
@@ -49,6 +62,19 @@ public class PostJpaEntity {
 
   public void setContent(String content) {
     this.content = content;
+  }
+
+  public Set<PostTagJpaEntity> getPostTags() {
+    return postTags;
+  }
+
+  /** Replace tags for this post. Requires post/tag ids to be non-null. */
+  public void replaceTags(Set<TagJpaEntity> tags) {
+    postTags.clear();
+    if (tags == null) return;
+    for (var tag : tags) {
+      postTags.add(new PostTagJpaEntity(this, tag));
+    }
   }
 
     @PrePersist
