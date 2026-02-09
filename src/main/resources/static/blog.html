@@ -260,6 +260,10 @@
                             <div id="viewForm" style="display: none; margin-top: 12px">
                                 <h3 style="margin: 0 0 8px; font-size: 16px" id="viewTitle"></h3>
                                 <div style="margin-top: 10px">
+                                    <div class="muted" style="margin-bottom: 8px">
+                                        author:
+                                        <a id="viewAuthorLink" href="#" class="pill" style="text-decoration: none"></a>
+                                    </div>
                                     <div id="viewContent"></div>
                                     <div id="viewTags" class="tags"></div>
                                     <div id="viewCreatedAt" class="date"></div>
@@ -270,9 +274,10 @@
                             <div style="margin-top: 16px">
                                 <h3 style="margin: 0 0 8px; font-size: 16px">댓글</h3>
                                 <div style="margin-top: 10px">
-                                    <textarea id="commentInput" placeholder="댓글 입력..." disabled></textarea>
+                                    <div id="commentsList" class="list" style="gap: 8px"></div>
+                                    <textarea id="commentInput" placeholder="댓글 입력..."></textarea>
                                     <div class="row2" style="margin-top: 8px">
-                                        <button class="secondary" type="button" disabled>Add comment</button>
+                                        <button class="secondary" id="btnAddComment" type="button">Add comment</button>
                                     </div>
                                 </div>
                             </div>
@@ -307,6 +312,11 @@
             const viewTagsEl = document.getElementById("viewTags");
             const viewCreatedAtEl = document.getElementById("viewCreatedAt");
             const viewModifiedAtEl = document.getElementById("viewModifiedAt");
+            const viewAuthorLinkEl = document.getElementById("viewAuthorLink");
+
+            const commentsListEl = document.getElementById("commentsList");
+            const commentInputEl = document.getElementById("commentInput");
+            const btnAddCommentEl = document.getElementById("btnAddComment");
 
             const btnEdit = document.getElementById("btnEdit");
             const btnDelete = document.getElementById("btnDelete");
@@ -414,6 +424,15 @@
                     const el = document.createElement("span");
                     el.className = "tag";
                     el.textContent = t;
+                    // view 모드일 때만 태그 클릭 가능
+                    if (!editMode) {
+                        el.style.cursor = "pointer";
+                        el.title = "태그로 게시글 보기";
+                        el.addEventListener("click", () => {
+                            const q = new URLSearchParams({ tag: t });
+                            location.href = "/tag.html?" + q.toString();
+                        });
+                    }
                     viewTagsEl.appendChild(el);
                 }
 
@@ -512,6 +531,24 @@
                 const json = await gql(query, { id });
                 const data = pickDataOrThrow(json);
                 return data.post;
+            }
+
+            async function loadComments(postId) {
+                const query = `
+                    query Comments($postId: ID!) {
+                        commentsByPost(postId: $postId) {
+                            id
+                            content
+                            authorId
+                            postId
+                            createdAt
+                            modifiedAt
+                        }
+                    }
+                `;
+                const json = await gql(query, { postId });
+                const data = pickDataOrThrow(json);
+                return data.commentsByPost ?? [];
             }
 
             async function refreshListAndKeepSelection() {
@@ -640,6 +677,122 @@
                 viewContentEl.innerHTML = post.content ?? "";
                 viewCreatedAtEl.textContent = formatDate(post.createdAt ?? "");
                 viewModifiedAtEl.textContent = formatDate(post.modifiedAt ?? "");
+
+                // author profile link
+                viewAuthorLinkEl.textContent = String(post.authorId);
+                viewAuthorLinkEl.href = "/user.html?id=" + encodeURIComponent(String(post.authorId));
+
+                await refreshComments();
+            }
+
+            function canEditComment(c, me) {
+                return c && me && String(c.authorId) === String(me.id);
+            }
+
+            function renderComments(comments) {
+                commentsListEl.innerHTML = "";
+                const me = getSession();
+
+                for (const c of comments) {
+                    const card = document.createElement("div");
+                    card.className = "item";
+
+                    const meta = document.createElement("div");
+                    meta.className = "muted";
+                    meta.style.marginBottom = "6px";
+                    meta.innerHTML = `
+                      <span class="pill">id: ${escapeHtml(String(c.id))}</span>
+                      <a class="pill" style="text-decoration:none" href="/user.html?id=${encodeURIComponent(String(c.authorId))}">authorId: ${escapeHtml(String(c.authorId))}</a>
+                    `;
+
+                    const content = document.createElement("div");
+                    content.textContent = c.content ?? "";
+
+                    const actions = document.createElement("div");
+                    actions.className = "row2";
+                    actions.style.marginTop = "8px";
+
+                    if (canEditComment(c, me)) {
+                        const btnEditC = document.createElement("button");
+                        btnEditC.type = "button";
+                        btnEditC.className = "secondary";
+                        btnEditC.textContent = "Edit";
+                        btnEditC.addEventListener("click", async () => {
+                            const next = prompt("댓글 수정", c.content ?? "");
+                            if (next == null) return;
+                            await modifyComment(c.id, next);
+                        });
+
+                        const btnDelC = document.createElement("button");
+                        btnDelC.type = "button";
+                        btnDelC.className = "danger";
+                        btnDelC.textContent = "Delete";
+                        btnDelC.addEventListener("click", async () => {
+                            if (!confirm("댓글 삭제?")) return;
+                            await deleteComment(c.id);
+                        });
+
+                        actions.appendChild(btnEditC);
+                        actions.appendChild(btnDelC);
+                    }
+
+                    const dates = document.createElement("div");
+                    dates.className = "muted";
+                    dates.style.marginTop = "6px";
+                    dates.textContent = `createdAt: ${formatDate(c.createdAt) ?? "-"} / modifiedAt: ${formatDate(c.modifiedAt) ?? "-"}`;
+
+                    card.appendChild(meta);
+                    card.appendChild(content);
+                    if (actions.childNodes.length) {
+                        card.appendChild(actions);
+                    }
+                    card.appendChild(dates);
+                    commentsListEl.appendChild(card);
+                }
+            }
+
+            async function refreshComments() {
+                if (!selectedPost?.id) {
+                    commentsListEl.innerHTML = "";
+                    return;
+                }
+                const comments = await loadComments(String(selectedPost.id));
+                renderComments(comments);
+            }
+
+            async function createComment(postId, content) {
+                const query = `
+                    mutation CreateComment($postId: ID!, $content: String!) {
+                        createComment(postId: $postId, content: $content) {
+                            id
+                        }
+                    }
+                `;
+                const json = await gql(query, { postId, content });
+                pickDataOrThrow(json);
+                await refreshComments();
+            }
+
+            async function modifyComment(id, content) {
+                const query = `
+                    mutation ModifyComment($id: ID!, $content: String!) {
+                        modifyComment(id: $id, content: $content) { id }
+                    }
+                `;
+                const json = await gql(query, { id, content });
+                pickDataOrThrow(json);
+
+                refreshComments();
+            }
+
+            async function deleteComment(id) {
+                const query = `
+                    mutation DeleteComment($id: ID!) {
+                        deleteComment(id: $id)
+                    }
+                `;
+                const json = await gql(query, { id });
+                pickDataOrThrow(json);
             }
 
             function formatDate(dateStr) {
@@ -701,6 +854,22 @@
                     if (!selectedPost?.id) {
                         detailUiEl.style.display = "none";
                     }
+                    setDetailText(String(e));
+                }
+            });
+
+            btnAddCommentEl.addEventListener("click", async () => {
+                const me = ensureLoggedIn();
+                if (!me) return;
+                if (!selectedPost?.id) return;
+
+                const content = (commentInputEl.value ?? "").trim();
+                if (!content) return;
+
+                try {
+                    await createComment(String(selectedPost.id), content);
+                    commentInputEl.value = "";
+                } catch (e) {
                     setDetailText(String(e));
                 }
             });

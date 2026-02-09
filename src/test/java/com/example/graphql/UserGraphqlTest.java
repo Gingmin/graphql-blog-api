@@ -5,6 +5,7 @@ import static org.mockito.BDDMockito.given;
 
 import com.example.graphql.user.UserMutationController;
 import com.example.graphql.user.UserQueryController;
+import com.example.follow.application.FollowService;
 import com.example.user.application.UserService;
 import com.example.user.domain.User;
 import java.time.Instant;
@@ -20,6 +21,7 @@ class UserGraphqlTest {
   @Autowired GraphQlTester graphQlTester;
 
   @MockitoBean UserService userService;
+  @MockitoBean FollowService followService;
 
   @Test
   void users_returnsList() {
@@ -93,6 +95,63 @@ class UserGraphqlTest {
         .execute()
         .path("me")
         .valueIsNull();
+  }
+
+  @Test
+  void followersCount_returnsInt() {
+    given(followService.followersCount(2L)).willReturn(7L);
+
+    graphQlTester
+        .document("query($userId: ID!){ followersCount(userId:$userId) }")
+        .variable("userId", "2")
+        .execute()
+        .path("followersCount")
+        .entity(Integer.class)
+        .satisfies(v -> assertThat(v).isEqualTo(7));
+  }
+
+  @Test
+  void followingCount_returnsInt() {
+    given(followService.followingCount(2L)).willReturn(3L);
+
+    graphQlTester
+        .document("query($userId: ID!){ followingCount(userId:$userId) }")
+        .variable("userId", "2")
+        .execute()
+        .path("followingCount")
+        .entity(Integer.class)
+        .satisfies(v -> assertThat(v).isEqualTo(3));
+  }
+
+  @Test
+  void isFollowing_withoutToken_returnsFalse() {
+    graphQlTester
+        .document("query($userId: ID!){ isFollowing(userId:$userId) }")
+        .variable("userId", "2")
+        .execute()
+        .path("isFollowing")
+        .entity(Boolean.class)
+        .satisfies(v -> assertThat(v).isFalse());
+  }
+
+  @Test
+  void followUser_withoutToken_returnsError() {
+    graphQlTester
+        .document("mutation($userId: ID!){ followUser(userId:$userId) }")
+        .variable("userId", "2")
+        .execute()
+        .errors()
+        .satisfy(errs -> assertThat(errs).isNotEmpty());
+  }
+
+  @Test
+  void unfollowUser_withoutToken_returnsError() {
+    graphQlTester
+        .document("mutation($userId: ID!){ unfollowUser(userId:$userId) }")
+        .variable("userId", "2")
+        .execute()
+        .errors()
+        .satisfy(errs -> assertThat(errs).isNotEmpty());
   }
 }
 

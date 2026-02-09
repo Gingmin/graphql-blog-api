@@ -7,6 +7,7 @@ extend type Query {
   following(userId: ID!): [User!]!
   followersCount(userId: ID!): Int!
   followingCount(userId: ID!): Int!
+  isFollowing(userId: ID!): Boolean!
 }
 
 type AuthPayload {
@@ -18,8 +19,8 @@ extend type Mutation {
   signUp(username: String!, email: String!, password: String!): AuthPayload!
   login(email: String!, password: String!): AuthPayload!
 
-  followUser(myId: ID!, userId: ID!): Boolean!
-  unfollowUser(myId: ID!, userId: ID!): Boolean!
+  followUser(userId: ID!): Boolean!
+  unfollowUser(userId: ID!): Boolean!
 }
 
 type User {

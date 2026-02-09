@@ -1,5 +1,9 @@
+extend type Query {
+  commentsByPost(postId: ID!): [Comment!]!
+}
+
 extend type Mutation {
-  createComment(postId: ID!, authorId: ID!, content: String!): Comment!
+  createComment(postId: ID!, content: String!): Comment!
   modifyComment(id: ID!, content: String!): Comment!
   deleteComment(id: ID!): Boolean!
 }
@@ -7,8 +11,8 @@ extend type Mutation {
 type Comment {
   id: ID!
   content: String!
-  author: User!
-  post: Post!
+  authorId: ID!
+  postId: ID!
   createdAt: String!
   modifiedAt: String!
 }

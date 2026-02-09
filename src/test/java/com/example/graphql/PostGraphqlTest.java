@@ -2,6 +2,7 @@ package com.example.graphql;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.ArgumentMatchers.any;
 
 import com.example.graphql.post.PostMutationController;
 import com.example.graphql.post.PostQueryController;
@@ -36,8 +37,8 @@ class PostGraphqlTest {
 
   @Test
   void posts_returnsPage() {
-    given(postService.posts(0, 3))
-        .willReturn(new PostPage(List.of(samplePost(1)), 0, 3, 1L, 1, false, false));
+    given(postService.posts(any(), any()))
+        .willReturn(new PostPage(List.of(samplePost(1)), 0, 20, 1L, 1, false, false));
 
     graphQlTester
         .document(

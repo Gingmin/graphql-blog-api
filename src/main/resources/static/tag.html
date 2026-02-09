@@ -1,0 +1,204 @@
+<!doctype html>
+<html lang="ko">
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <title>Tag</title>
+        <style>
+            *,
+            *::before,
+            *::after {
+                box-sizing: border-box;
+            }
+            body {
+                font-family:
+                    system-ui,
+                    -apple-system,
+                    Segoe UI,
+                    Roboto,
+                    Arial,
+                    sans-serif;
+                margin: 24px;
+                line-height: 1.4;
+                background: #fafafa;
+                color: #111827;
+            }
+            .container {
+                max-width: 860px;
+                margin: 0 auto;
+            }
+            .card {
+                background: #fff;
+                border: 1px solid #e5e7eb;
+                border-radius: 12px;
+                padding: 16px;
+                box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+            }
+            .row {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                gap: 10px;
+                flex-wrap: wrap;
+            }
+            .muted {
+                color: #6b7280;
+                font-size: 13px;
+            }
+            .list {
+                display: flex;
+                flex-direction: column;
+                gap: 10px;
+                margin-top: 12px;
+            }
+            .item {
+                border: 1px solid #e5e7eb;
+                border-radius: 12px;
+                padding: 12px;
+                background: #fff;
+            }
+            .pill {
+                display: inline-block;
+                padding: 2px 8px;
+                border-radius: 999px;
+                border: 1px solid #e5e7eb;
+                font-size: 12px;
+                color: #374151;
+                background: #fff;
+            }
+            button {
+                border: 1px solid #e5e7eb;
+                background: #fff;
+                border-radius: 10px;
+                padding: 8px 12px;
+                cursor: pointer;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <div class="card">
+                <div class="row">
+                    <div>
+                        <h2 style="margin: 0 0 4px">Tag feed</h2>
+                        <div class="muted">태그가 포함된 게시글 목록 (여기서는 상세로 들어가지 않음)</div>
+                    </div>
+                    <div class="row">
+                        <button id="btnBack" type="button">Back</button>
+                    </div>
+                </div>
+
+                <div class="muted" style="margin-top: 10px">
+                    tag: <span class="pill" id="tagName"></span>
+                </div>
+
+                <div id="out" class="muted" style="margin-top: 12px"></div>
+                <div class="list" id="list"></div>
+            </div>
+        </div>
+
+        <script>
+            const graphqlUrl = location.protocol === "file:" ? "http://localhost:8080/graphql" : "/graphql";
+
+            function getToken() {
+                return localStorage.getItem("session.token");
+            }
+
+            async function gql(query, variables) {
+                const token = getToken();
+                const headers = { "Content-Type": "application/json" };
+                if (token) {
+                    headers["Authorization"] = "Bearer " + token;
+                }
+                const res = await fetch(graphqlUrl, {
+                    method: "POST",
+                    headers,
+                    body: JSON.stringify({ query, variables }),
+                });
+                const text = await res.text();
+                try {
+                    return JSON.parse(text);
+                } catch {
+                    return { raw: text };
+                }
+            }
+
+            function pickDataOrThrow(json) {
+                if (json?.errors?.length) {
+                    const msg = json.errors.map((e) => e.message).join("\n");
+                    throw new Error(msg);
+                }
+                return json.data;
+            }
+
+            function escapeHtml(s) {
+                return String(s)
+                    .replaceAll("&", "&amp;")
+                    .replaceAll("<", "&lt;")
+                    .replaceAll(">", "&gt;")
+                    .replaceAll('"', "&quot;")
+                    .replaceAll("'", "&#039;");
+            }
+
+            const listEl = document.getElementById("list");
+            const outEl = document.getElementById("out");
+            const tagNameEl = document.getElementById("tagName");
+
+            document.getElementById("btnBack").addEventListener("click", () => {
+                location.href = "/blog.html";
+            });
+
+            async function load() {
+                const params = new URLSearchParams(location.search);
+                const tag = (params.get("tag") ?? "").trim();
+                tagNameEl.textContent = tag || "(empty)";
+                if (!tag) {
+                    outEl.textContent = "tag 파라미터가 없어. 예) /tag.html?tag=java";
+                    return;
+                }
+
+                outEl.textContent = "Loading...";
+
+                const query = `
+                    query PostsByTag($tagName: String!) {
+                        postsByTag(tagName: $tagName) {
+                            id
+                            title
+                            authorId
+                            tagNames
+                            createdAt
+                        }
+                    }
+                `;
+                const json = await gql(query, { tagName: tag });
+                const data = pickDataOrThrow(json);
+                const posts = data.postsByTag ?? [];
+
+                outEl.textContent = `total: ${posts.length}`;
+                listEl.innerHTML = "";
+
+                for (const p of posts) {
+                    const div = document.createElement("div");
+                    div.className = "item";
+                    div.innerHTML = `
+                        <div style="font-weight: 600; margin-bottom: 6px">${escapeHtml(p.title ?? "(no title)")}</div>
+                        <div class="muted">
+                            <span class="pill">id: ${escapeHtml(String(p.id))}</span>
+                            <a class="pill" style="text-decoration:none" href="/user.html?id=${encodeURIComponent(
+                                String(p.authorId),
+                            )}">authorId: ${escapeHtml(String(p.authorId))}</a>
+                        </div>
+                        <div class="muted" style="margin-top: 6px">tags: ${(p.tagNames ?? []).map(escapeHtml).join(", ") || "-"}</div>
+                    `;
+                    // 요구사항: 여기서는 상세로 들어가지 않음 (click 없음)
+                    listEl.appendChild(div);
+                }
+            }
+
+            load().catch((e) => {
+                outEl.textContent = String(e);
+            });
+        </script>
+    </body>
+</html>
+
