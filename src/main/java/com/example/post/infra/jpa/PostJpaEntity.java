@@ -56,26 +56,28 @@ public class PostJpaEntity {
         this.authorId = authorId;
     }
 
-  public void setTitle(String title) {
-    this.title = title;
-  }
-
-  public void setContent(String content) {
-    this.content = content;
-  }
-
-  public Set<PostTagJpaEntity> getPostTags() {
-    return postTags;
-  }
-
-  /** Replace tags for this post. Requires post/tag ids to be non-null. */
-  public void replaceTags(Set<TagJpaEntity> tags) {
-    postTags.clear();
-    if (tags == null) return;
-    for (var tag : tags) {
-      postTags.add(new PostTagJpaEntity(this, tag));
+    public void setTitle(String title) {
+        this.title = title;
     }
-  }
+
+    public void setContent(String content) {
+        this.content = content;
+    }
+
+    public Set<PostTagJpaEntity> getPostTags() {
+        return postTags;
+    }
+
+    /** Replace tags for this post. Requires post/tag ids to be non-null. */
+    public void replaceTags(Set<TagJpaEntity> tags) {
+        postTags.clear();
+        if (tags == null) {
+            return;
+        }
+        for (var tag : tags) {
+        postTags.add(new PostTagJpaEntity(this, tag));
+        }
+    }
 
     @PrePersist
     void prePersist() {

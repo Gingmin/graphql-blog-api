@@ -14,8 +14,21 @@ public class PostService {
     }
 
     @Transactional(readOnly = true)
-    public List<Post> posts() {
-        return postRepository.findAll();
+    public PostPage posts() {
+        return posts(0, 3);
+    }
+
+    @Transactional(readOnly = true)
+    public PostPage posts(Integer page, Integer size) {
+        int p = page == null ? 0 : page;
+        int s = size == null ? 3 : size;
+        if (p < 0) {
+            throw new IllegalArgumentException("page must be >= 0");
+        }
+        if (s < 1 || s > 100) {
+            throw new IllegalArgumentException("size must be between 1 and 100");
+        }
+        return postRepository.findPage(p, s);
     }
 
     @Transactional(readOnly = true)

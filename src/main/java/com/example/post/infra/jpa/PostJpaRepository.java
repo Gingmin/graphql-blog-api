@@ -2,11 +2,16 @@ package com.example.post.infra.jpa;
 
 import java.util.List;
 import java.util.Optional;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 public interface PostJpaRepository extends JpaRepository<PostJpaEntity, Long> {
+
+    @Query("select p from PostJpaEntity p order by p.createdAt desc")
+    Page<PostJpaEntity> findPage(Pageable pageable);
     
     @Query(
         """

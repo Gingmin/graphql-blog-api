@@ -13,6 +13,8 @@ public interface PostRepository {
     boolean deletePost(Long id);
 
     List<Post> findAll();
+
+    PostPage findPage(int page, int size);
     
     Optional<Post> findById(Long id);
 

@@ -212,6 +212,10 @@
                             </div>
                             <div class="row2">
                                 <button class="secondary" id="btnRefresh" type="button">Refresh</button>
+                                <button class="secondary" id="btnPrevPage" type="button">Prev</button>
+                                <div class="row2" id="pageButtons"></div>
+                                <span class="muted" id="pageInfo"></span>
+                                <button class="secondary" id="btnNextPage" type="button">Next</button>
                                 <button id="btnNewPost" type="button">New post</button>
                             </div>
                         </div>
@@ -308,6 +312,10 @@
             const btnDelete = document.getElementById("btnDelete");
             const btnNewPost = document.getElementById("btnNewPost");
             const btnClose = document.getElementById("btnClose");
+            const btnPrevPage = document.getElementById("btnPrevPage");
+            const btnNextPage = document.getElementById("btnNextPage");
+            const pageInfoEl = document.getElementById("pageInfo");
+            const pageButtonsEl = document.getElementById("pageButtons");
 
             let selectedPost = null;
             let editMode = false;
@@ -453,24 +461,38 @@
                 setDetailText("");
             }
 
-            async function loadPosts() {
+            let page = 0;
+            const size = 3;
+            let lastPageInfo = null;
+
+            async function loadPostsPage() {
                 const query = `
-                    query Posts {
-                        posts {
-                            id
-                            title
-                            content
-                            authorId
-                            tagNames
-                            createdAt
-                            modifiedAt
-                            likes
+                    query Posts($page: Int!, $size: Int!) {
+                        posts(page: $page, size: $size) {
+                            items {
+                                id
+                                title
+                                content
+                                authorId
+                                tagNames
+                                createdAt
+                                modifiedAt
+                                likes
+                            }
+                            pageInfo {
+                                page
+                                size
+                                totalElements
+                                totalPages
+                                hasNext
+                                hasPrev
+                            }
                         }
                     }
                 `;
-                const json = await gql(query, {});
+                const json = await gql(query, { page, size });
                 const data = pickDataOrThrow(json);
-                return data.posts ?? [];
+                return data.posts;
             }
 
             async function loadPost(id) {
@@ -499,8 +521,25 @@
                     detailUiEl.style.display = "none";
                 }
 
-                const posts = await loadPosts();
+                const result = await loadPostsPage();
+                const posts = result?.items ?? [];
+                lastPageInfo = result?.pageInfo ?? null;
+                if (lastPageInfo && typeof lastPageInfo.page === "number") {
+                    page = lastPageInfo.page;
+                }
+
                 renderList(posts);
+                renderPagination(lastPageInfo);
+
+                if (lastPageInfo) {
+                    pageInfoEl.textContent = `page ${lastPageInfo.page + 1} / ${Math.max(1, lastPageInfo.totalPages ?? 1)} (total ${lastPageInfo.totalElements ?? 0})`;
+                    btnPrevPage.disabled = !lastPageInfo.hasPrev;
+                    btnNextPage.disabled = !lastPageInfo.hasNext;
+                } else {
+                    pageInfoEl.textContent = `page ${page + 1}`;
+                    btnPrevPage.disabled = page <= 0;
+                    btnNextPage.disabled = false;
+                }
 
                 if (selectedPost?.id) {
                     await openPost(selectedPost.id);
@@ -530,6 +569,37 @@
                     `;
                     div.addEventListener("click", () => openPost(p.id));
                     listEl.appendChild(div);
+                }
+            }
+
+            function renderPagination(info) {
+                pageButtonsEl.innerHTML = "";
+                if (!info || !info.totalPages || info.totalPages <= 1) {
+                    return;
+                }
+
+                const groupSize = 5;
+                const totalPages = info.totalPages;
+                const groupStart = Math.floor(page / groupSize) * groupSize;
+                const groupEnd = Math.min(totalPages - 1, groupStart + groupSize - 1);
+
+                for (let p = groupStart; p <= groupEnd; p += 1) {
+                    const b = document.createElement("button");
+                    b.type = "button";
+                    b.className = "secondary";
+                    b.textContent = String(p + 1);
+                    if (p === page) {
+                        b.style.borderColor = "#111827";
+                        b.style.color = "#111827";
+                    }
+                    b.addEventListener("click", async () => {
+                        if (p === page) return;
+                        page = p;
+                        selectedPost = null;
+                        await goListView();
+                        await refreshListAndKeepSelection();
+                    });
+                    pageButtonsEl.appendChild(b);
                 }
             }
 
@@ -617,6 +687,7 @@
             });
 
             document.getElementById("btnRefresh").addEventListener("click", async () => {
+                page = 0;
                 // 작성 중 Refresh를 눌렀다면 목록으로 복귀하는 게 자연스러움
                 if (createMode) {
                     await goListView();
@@ -632,6 +703,30 @@
                     }
                     setDetailText(String(e));
                 }
+            });
+
+            btnPrevPage.addEventListener("click", async () => {
+                if (lastPageInfo && !lastPageInfo.hasPrev) {
+                    return;
+                }
+                if (page <= 0) return;
+                page -= 1;
+                selectedPost = null;
+                await goListView();
+                await refreshListAndKeepSelection();
+            });
+
+            btnNextPage.addEventListener("click", async () => {
+                if (lastPageInfo && !lastPageInfo.hasNext) {
+                    return;
+                }
+                if (lastPageInfo && typeof lastPageInfo.totalPages === "number" && page + 1 >= lastPageInfo.totalPages) {
+                    return;
+                }
+                page += 1;
+                selectedPost = null;
+                await goListView();
+                await refreshListAndKeepSelection();
             });
 
             btnNewPost.addEventListener("click", () => openCreate());

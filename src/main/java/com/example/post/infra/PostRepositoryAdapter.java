@@ -1,9 +1,11 @@
 package com.example.post.infra;
 
+import com.example.post.application.PostPage;
 import com.example.post.application.PostRepository;
 import com.example.post.domain.Post;
 import com.example.post.infra.jpa.PostJpaEntity;
 import com.example.post.infra.jpa.PostJpaRepository;
+import com.example.post.infra.jpa.PostTagJpaRepository;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -12,15 +14,21 @@ import java.util.stream.Collectors;
 import org.springframework.stereotype.Repository;
 import com.example.tag.infra.jpa.TagJpaEntity;
 import com.example.tag.infra.jpa.TagJpaRepository;
+import org.springframework.data.domain.PageRequest;
 
 @Repository
 public class PostRepositoryAdapter implements PostRepository {
     private final PostJpaRepository jpaRepository;
     private final TagJpaRepository tagJpaRepository;
+    private final PostTagJpaRepository postTagJpaRepository;
 
-    public PostRepositoryAdapter(PostJpaRepository jpaRepository, TagJpaRepository tagJpaRepository) {
+    public PostRepositoryAdapter(
+        PostJpaRepository jpaRepository,
+        TagJpaRepository tagJpaRepository,
+        PostTagJpaRepository postTagJpaRepository) {
         this.jpaRepository = jpaRepository;
         this.tagJpaRepository = tagJpaRepository;
+        this.postTagJpaRepository = postTagJpaRepository;
     }
 
     @Override
@@ -58,6 +66,47 @@ public class PostRepositoryAdapter implements PostRepository {
     }
 
     @Override
+    public PostPage findPage(int page, int size) {
+        var pageable = PageRequest.of(page, size);
+        var pageResult = jpaRepository.findPage(pageable);
+        var posts = pageResult.getContent();
+        if (posts.isEmpty()) {
+            return new PostPage(
+                List.of(),
+                pageResult.getNumber(),
+                pageResult.getSize(),
+                pageResult.getTotalElements(),
+                pageResult.getTotalPages(),
+                pageResult.hasNext(),
+                pageResult.hasPrevious());
+        }
+
+        var postIds = posts.stream().map(PostJpaEntity::getId).toList();
+        var pts = postTagJpaRepository.findByPostIdInWithTag(postIds);
+
+        Map<Long, List<String>> tagsByPostId =
+            pts.stream()
+                .collect(
+                    Collectors.groupingBy(
+                        pt -> pt.getPost().getId(),
+                        Collectors.mapping(pt -> pt.getTag().getName(), Collectors.toList())));
+
+        var items =
+            posts.stream()
+                .map(p -> toDomain(p, tagsByPostId.getOrDefault(p.getId(), List.of())))
+                .toList();
+
+        return new PostPage(
+            items,
+            pageResult.getNumber(),
+            pageResult.getSize(),
+            pageResult.getTotalElements(),
+            pageResult.getTotalPages(),
+            pageResult.hasNext(),
+            pageResult.hasPrevious());
+    }
+
+    @Override
     public List<Post> findByTag(String tagName) {
         return jpaRepository.findByTagNameWithTags(tagName).stream()
             .map(PostRepositoryAdapter::toDomain)
@@ -71,16 +120,17 @@ public class PostRepositoryAdapter implements PostRepository {
 
     private static Post toDomain(PostJpaEntity e) {
         var tagNames =
-            e.getPostTags().stream()
-                .map(pt -> pt.getTag().getName())
-                .sorted()
-                .toList();
+            e.getPostTags().stream().map(pt -> pt.getTag().getName()).sorted().toList();
+        return toDomain(e, tagNames);
+    }
+
+    private static Post toDomain(PostJpaEntity e, List<String> tagNames) {
         return new Post(
             e.getId(),
             e.getTitle(),
             e.getContent(),
             e.getAuthorId(),
-            tagNames,
+            tagNames == null ? List.of() : tagNames.stream().distinct().sorted().toList(),
             e.getCreatedAt(),
             e.getModifiedAt(),
             e.getLikesCount()
