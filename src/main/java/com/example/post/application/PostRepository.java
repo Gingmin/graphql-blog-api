@@ -12,6 +12,10 @@ public interface PostRepository {
 
     boolean deletePost(Long id);
 
+    int likePost(Long id, Long userId);
+
+    boolean hasLikedPost(Long id, Long userId);
+
     List<Post> findAll();
 
     PostPage findPage(int page, int size);

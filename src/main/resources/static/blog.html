@@ -590,9 +590,12 @@
                 const activeId = selectedPost?.id;
                 listEl.innerHTML = "";
 
+                // console.log(activeId);
+
                 for (const p of posts) {
                     const div = document.createElement("div");
-                    div.className = "item" + (String(p.id) === String(activeId) ? " active" : "");
+                    // div.className = "item" + (String(p.id) === String(activeId) ? " active" : "");
+                    div.className = "item";
                     div.innerHTML = `
                       <h4>${escapeHtml(p.title ?? "(no title)")}</h4>
                       <div class="muted">
@@ -681,6 +684,22 @@
                 // author profile link
                 viewAuthorLinkEl.textContent = String(post.authorId);
                 viewAuthorLinkEl.href = "/user.html?id=" + encodeURIComponent(String(post.authorId));
+
+                // like button state (already liked -> disable)
+                try {
+                    const q = `
+                        query HasLiked($id: ID!) {
+                            hasLikedPost(id: $id)
+                        }
+                    `;
+                    const json = await gql(q, { id: String(post.id) });
+                    const data = pickDataOrThrow(json);
+                    const liked = !!data.hasLikedPost;
+                    document.getElementById("btnLike").disabled = liked;
+                } catch {
+                    // ignore (e.g. not logged in)
+                    document.getElementById("btnLike").disabled = false;
+                }
 
                 await refreshComments();
             }
@@ -904,8 +923,29 @@
                 goListView();
             });
 
-            document.getElementById("btnLike").addEventListener("click", () => {
-                alert("좋아요 mutation이 아직 없어. (UI만 만들어둠)");
+            document.getElementById("btnLike").addEventListener("click", async () => {
+                const me = ensureLoggedIn();
+                if (!me) return;
+                if (!selectedPost?.id) return;
+                if (document.getElementById("btnLike").disabled) return;
+
+                const query = `
+                    mutation LikePost($id: ID!) {
+                        likePost(id: $id)
+                    }
+                `;
+                try {
+                    const json = await gql(query, { id: String(selectedPost.id) });
+                    const data = pickDataOrThrow(json);
+                    const next = data.likePost ?? 0;
+                    likesCountEl.textContent = String(next);
+                    // list에도 반영
+                    selectedPost.likes = next;
+                    document.getElementById("btnLike").disabled = true;
+                    await refreshListAndKeepSelection();
+                } catch (e) {
+                    setDetailText(String(e));
+                }
             });
 
             function addTagFromInput() {

@@ -29,6 +29,15 @@ create table if not exists posts (
 create index if not exists ix_posts_created_at on posts (created_at desc);
 create index if not exists ix_posts_author_id on posts (author_id);
 
+-- post_likes (게시글-유저 좋아요, 1유저=1좋아요)
+create table if not exists post_likes (
+  post_id bigint not null references posts(id) on delete cascade,
+  user_id bigint not null references users(id) on delete cascade,
+  created_at timestamptz not null default now(),
+  primary key (post_id, user_id)
+);
+create index if not exists ix_post_likes_user_id on post_likes (user_id);
+
 -- comments
 create table if not exists comments (
   id bigserial primary key,

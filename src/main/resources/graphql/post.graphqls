@@ -1,14 +1,16 @@
 extend type Query {
-    posts(page: Int = 0, size: Int = 3): PostPage!
+    posts(page: Int = 0, size: Int = 20): PostPage!
     post(id: ID!): Post
 
     postsByTag(tagName: String!): [Post!]!
+    hasLikedPost(id: ID!): Boolean!
 }
 
 extend type Mutation {
     createPost(title: String!, content: String!, authorId: ID!, tagNames: [String!]): Post!
     modifyPost(id: ID!, title: String!, content: String!, tagNames: [String!]): Post!
     deletePost(id: ID!): Boolean!
+    likePost(id: ID!): Int!
 }
 
 type Post {

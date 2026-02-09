@@ -5,6 +5,7 @@ import com.example.post.application.PostRepository;
 import com.example.post.domain.Post;
 import com.example.post.infra.jpa.PostJpaEntity;
 import com.example.post.infra.jpa.PostJpaRepository;
+import com.example.post.infra.jpa.PostLikeJpaRepository;
 import com.example.post.infra.jpa.PostTagJpaRepository;
 import java.util.List;
 import java.util.Map;
@@ -20,14 +21,17 @@ import org.springframework.data.domain.PageRequest;
 public class PostRepositoryAdapter implements PostRepository {
     private final PostJpaRepository jpaRepository;
     private final TagJpaRepository tagJpaRepository;
+    private final PostLikeJpaRepository postLikeJpaRepository;
     private final PostTagJpaRepository postTagJpaRepository;
 
     public PostRepositoryAdapter(
         PostJpaRepository jpaRepository,
         TagJpaRepository tagJpaRepository,
+        PostLikeJpaRepository postLikeJpaRepository,
         PostTagJpaRepository postTagJpaRepository) {
         this.jpaRepository = jpaRepository;
         this.tagJpaRepository = tagJpaRepository;
+        this.postLikeJpaRepository = postLikeJpaRepository;
         this.postTagJpaRepository = postTagJpaRepository;
     }
 
@@ -58,6 +62,27 @@ public class PostRepositoryAdapter implements PostRepository {
     public boolean deletePost(Long id) {
         jpaRepository.deleteById(id);
         return true;
+    }
+
+    @Override
+    public int likePost(Long id, Long userId) {
+        // ensure post exists (nice error message)
+        if (!jpaRepository.existsById(id)) {
+            throw new IllegalArgumentException("post not found: " + id);
+        }
+
+        int inserted = postLikeJpaRepository.insertIgnore(id, userId);
+        if (inserted == 1) {
+            jpaRepository.incrementLikes(id);
+        }
+
+        Integer count = jpaRepository.findLikesCount(id);
+        return count == null ? 0 : count;
+    }
+
+    @Override
+    public boolean hasLikedPost(Long id, Long userId) {
+        return postLikeJpaRepository.existsByIdPostIdAndIdUserId(id, userId);
     }
 
     @Override

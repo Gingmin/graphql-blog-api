@@ -149,5 +149,15 @@ class PostGraphqlTest {
         .entity(Boolean.class)
         .satisfies(v -> assertThat(v).isTrue());
   }
+
+  @Test
+  void likePost_withoutToken_returnsError() {
+    graphQlTester
+        .document("mutation($id: ID!){ likePost(id:$id) }")
+        .variable("id", "1")
+        .execute()
+        .errors()
+        .satisfy(errs -> assertThat(errs).isNotEmpty());
+  }
 }
 

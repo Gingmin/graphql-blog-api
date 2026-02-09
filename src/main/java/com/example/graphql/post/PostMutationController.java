@@ -1,8 +1,10 @@
 package com.example.graphql.post;
 
+import com.example.auth.AuthContext;
 import com.example.post.application.PostService;
 import java.util.List;
 import org.springframework.graphql.data.method.annotation.Argument;
+import org.springframework.graphql.data.method.annotation.ContextValue;
 import org.springframework.graphql.data.method.annotation.MutationMapping;
 import org.springframework.stereotype.Controller;
 
@@ -38,5 +40,16 @@ public class PostMutationController {
     @MutationMapping
     public boolean deletePost(@Argument("id") String id) {
         return postService.deletePost(Long.parseLong(id));
+    }
+
+    @MutationMapping
+    public int likePost(
+        @ContextValue(name = AuthContext.USER_ID, required = false) Long myId,
+        @Argument("id") String id
+    ) {
+        if (myId == null) {
+            throw new IllegalArgumentException("auth required");
+        }
+        return postService.likePost(Long.parseLong(id), myId);
     }
 }

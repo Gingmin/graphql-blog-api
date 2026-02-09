@@ -15,13 +15,13 @@ public class PostService {
 
     @Transactional(readOnly = true)
     public PostPage posts() {
-        return posts(0, 3);
+        return posts(0, 20);
     }
 
     @Transactional(readOnly = true)
     public PostPage posts(Integer page, Integer size) {
         int p = page == null ? 0 : page;
-        int s = size == null ? 3 : size;
+        int s = size == null ? 20 : size;
         if (p < 0) {
             throw new IllegalArgumentException("page must be >= 0");
         }
@@ -76,5 +76,22 @@ public class PostService {
             throw new IllegalArgumentException("id must not be null");
         }
         return postRepository.deletePost(id);
+    }
+
+    @Transactional
+    public int likePost(Long id, Long userId) {
+        if (id == null) {
+            throw new IllegalArgumentException("id must not be null");
+        }
+        if (userId == null) {
+            throw new IllegalArgumentException("userId must not be null");
+        }
+        return postRepository.likePost(id, userId);
+    }
+
+    @Transactional(readOnly = true)
+    public boolean hasLikedPost(Long id, Long userId) {
+        if (id == null || userId == null) return false;
+        return postRepository.hasLikedPost(id, userId);
     }
 }

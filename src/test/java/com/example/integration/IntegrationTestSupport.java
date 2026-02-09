@@ -15,6 +15,7 @@ abstract class IntegrationTestSupport {
   @BeforeEach
   void cleanup() {
     // order matters due to FK constraints
+    jdbc.execute("delete from post_likes");
     jdbc.execute("delete from post_tags");
     jdbc.execute("delete from tags");
     jdbc.execute("delete from comments");
