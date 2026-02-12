@@ -4,63 +4,61 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>GraphQL Test (local)</title>
+    <link rel="stylesheet" href="app.css" />
     <style>
-      body {
-        font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
-        margin: 24px;
-        line-height: 1.4;
-      }
-      textarea {
-        width: 100%;
-        height: 160px;
-        font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-        font-size: 13px;
-      }
-      input {
-        width: 100%;
-        padding: 8px;
-      }
-      button {
-        padding: 10px 14px;
-        cursor: pointer;
-      }
-      pre {
-        background: #0b1020;
-        color: #d6e0ff;
-        padding: 12px;
-        overflow: auto;
+      h2 {
+        margin: 0 0 6px;
+        font-size: 22px;
+        letter-spacing: -0.02em;
       }
       .row {
         display: grid;
         grid-template-columns: 1fr 1fr;
         gap: 16px;
+        margin-top: 12px;
       }
       @media (max-width: 900px) {
         .row {
           grid-template-columns: 1fr;
         }
       }
+      textarea {
+        height: 180px;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        font-size: 13px;
+      }
+      button#btn {
+        margin-top: 12px;
+      }
     </style>
   </head>
   <body>
-    <h2>Local GraphQL 테스트</h2>
-    <p>
-      서버 실행 후 이 페이지를 열면 바로 호출할 수 있어요. (기본 endpoint: <code>/graphql</code>)
-    </p>
+    <div class="container">
+      <div class="card">
+        <div class="row" style="align-items: baseline">
+          <div>
+            <h2>Local GraphQL 테스트</h2>
+            <div class="muted">
+              서버 실행 후 이 페이지를 열면 바로 호출할 수 있어요. (기본 endpoint:
+              <code>/graphql</code>)
+            </div>
+          </div>
+        </div>
 
-    <div class="row">
-      <div>
-        <h3>Query</h3>
-        <textarea id="query"></textarea>
-        <h3>Variables (JSON)</h3>
-        <textarea id="vars"></textarea>
-        <p>
-          <button id="btn">Send</button>
-        </p>
-      </div>
-      <div>
-        <h3>Result</h3>
-        <pre id="out"></pre>
+        <div class="row">
+          <div class="card" style="border: none; box-shadow: none; padding: 0">
+            <h3 style="margin: 0 0 10px">Query</h3>
+            <textarea id="query"></textarea>
+            <div class="spacer-12"></div>
+            <h3 style="margin: 0 0 10px">Variables (JSON)</h3>
+            <textarea id="vars"></textarea>
+            <button id="btn">Send</button>
+          </div>
+          <div class="card" style="border: none; box-shadow: none; padding: 0">
+            <h3 style="margin: 0 0 10px">Result</h3>
+            <pre id="out"></pre>
+          </div>
+        </div>
       </div>
     </div>
 
